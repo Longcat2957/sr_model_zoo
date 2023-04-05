@@ -5,12 +5,14 @@ import argparse
 from tqdm import tqdm
 from torchmetrics.functional import peak_signal_noise_ratio, structural_similarity_index_measure
 from torch.utils.data import DataLoader
-from model.mobilesr import MOBILESR
 from model.base import save_model
 from utils.dataset import train_Dataset, valid_Dataset
 from utils.metric import AverageMeter, get_current_datetime
 from utils.colortext import color_print
 
+# 모델 관련 임포트
+from model.mobilesr import MOBILESR
+from model.rlfn import RLFN
 
 parser = argparse.ArgumentParser()
 # 모델학습 공통사항
@@ -26,9 +28,9 @@ parser.add_argument('--lr_size', type=int, default=64, help='저해상도 이미
 # 훈련 관련 hyperparameter
 parser.add_argument("--lr", type=float, default=1e-3, help="초기 Learning rate")
 parser.add_argument("--loss", type=str, default="l2", choices=['l1', 'l2'], help="loss function to use")
-
-
 parser.add_argument('--epochs', type=int, default=50, help='훈련 에포크 수')
+
+# 모델 저장 관련 hyperparameter
 parser.add_argument('--save_freq', type=int, default=10, help='모델 저장 빈도')
 parser.add_argument('--tag', type=str, default=None)
 
@@ -53,7 +55,8 @@ def main():
     valid_loader = DataLoader(valid_dataset, actual_batch_size, shuffle=False,)
 
     # 모델 준비
-    net = MOBILESR(upscaling_factor=upscale_ratio)
+    # net = MOBILESR(upscaling_factor=upscale_ratio)
+    net = RLFN()
     net = net.to(DEVICE)
 
     # 손실 함수
