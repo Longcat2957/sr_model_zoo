@@ -48,8 +48,10 @@ class base_Dataset(Dataset):
 
     def _preload(self) -> Union[List[torch.Tensor], torch.Tensor]:
         print(f"START IMAGE PRELOAD ...")
-        with Pool(processes=os.cpu_count()) as pool:
-            preloaded_data = list(tqdm(pool.imap(read_img, self.img_paths), total=self.data_length))
+        with Pool(processes=os.cpu_count()//2) as pool:
+            preloaded_data = []
+            for img_data in tqdm(pool.imap_unordered(read_img, self.img_paths), total=self.data_length):
+                preloaded_data.append(img_data)
         pool.close()
         pool.join()
         color_print("\033[F\033[J ==> IMAGE PRELOAD COMPLETE", 'green')
@@ -136,8 +138,8 @@ class train_Dataset(base_Dataset):
         HR 이미지와 LR 이미지를 묶어서 튜플로 반환합니다.
         """
         hr_imgs, lr_imgs = zip(*batch)
-        hr_imgs = torch.stack(hr_imgs, 0)
-        lr_imgs = torch.stack(lr_imgs, 0)
+        hr_imgs = torch.cat(hr_imgs, 0)
+        lr_imgs = torch.cat(lr_imgs, 0)
         return hr_imgs, lr_imgs
     
 class valid_Dataset(base_Dataset):

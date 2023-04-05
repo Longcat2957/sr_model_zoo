@@ -2,6 +2,7 @@ import os
 import sys
 import torch
 import cv2
+from PIL import Image
 import numpy as np
 
 def is_image_file(path: str) -> bool:
@@ -39,22 +40,22 @@ def read_img(p: str) -> np.ndarray:
 
     Raises:
         TypeError: 입력이 str 타입이 아닌 경우 발생합니다.
-        cv2.error: 이미지 파일을 읽어오지 못한 경우 발생합니다.
+        IOError: 이미지 파일을 읽어오지 못한 경우 발생합니다.
     """
     # 입력이 str 타입인지 검사합니다.
     if not isinstance(p, str):
         raise TypeError(f"입력은 str 타입이어야 합니다. 입력 타입: {type(p)}")
 
     try:
-        # 이미지 파일을 BGR 색상공간으로 읽어옵니다.
-        img = cv2.imread(p, cv2.IMREAD_COLOR)
+        # 이미지 파일을 RGB 색상공간으로 읽어옵니다.
+        img = Image.open(p).convert('RGB')
 
-        # BGR 색상공간에서 RGB 색상공간으로 변환합니다.
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # 이미지를 NumPy 배열로 변환합니다.
+        img = np.array(img)
 
         return img
 
-    except cv2.error as e:
+    except IOError as e:
         # 이미지 파일을 읽어오지 못한 경우 에러 메시지를 출력하고 프로그램을 종료합니다.
         print(f"[ERROR]: {e}")
         sys.exit(-1)

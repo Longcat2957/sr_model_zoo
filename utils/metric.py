@@ -1,4 +1,5 @@
 import torch
+import math
 import numpy as np
 from typing import Union, Iterable
 
@@ -38,4 +39,4 @@ class AverageMeter:
 
         if self.count > 1:
             self.var = ((self.count - 1) * self.var + (val - self.avg) ** 2) / self.count
-            self.std = torch.sqrt(self.var).item()
+            self.std = math.sqrt(self.var)
