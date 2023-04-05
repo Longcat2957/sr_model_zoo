@@ -103,7 +103,7 @@ class RLFN(nn.Module):
                  in_channels:int=3,
                  out_channels:int=3,
                  feature_channels:int=52,
-                 upscale:int=4):
+                 upscale_ratio:int=4):
         super().__init__()        
         self.conv_1 = conv_layer(in_channels,
                                  feature_channels,
@@ -121,7 +121,7 @@ class RLFN(nn.Module):
         self.upsampler = pixelshuffle_blocks(
             feature_channels,
             out_channels,
-            upscale_factor=upscale
+            upscale_factor=upscale_ratio
         )
         
     def forward(self, x:torch.Tensor):

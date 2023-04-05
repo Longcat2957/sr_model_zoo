@@ -151,9 +151,9 @@ class BaseBlock(nn.Module):
    
     
 class MOBILESR(nn.Module):
-    def __init__(self, n_feats=40, n_heads=8, ratios=[4, 2, 2, 2, 4], upscaling_factor=4):
+    def __init__(self, n_feats=40, n_heads=8, ratios=[4, 2, 2, 2, 4], upscale_ratio=4):
         super().__init__()
-        self.scale = upscaling_factor 
+        self.scale = upscale_ratio
         self.head = nn.Conv2d(3, n_feats, 3, 1, 1)
         
         self.body = BaseBlock(n_feats, num_heads=n_heads, ratios=ratios)

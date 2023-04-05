@@ -39,7 +39,6 @@ def main():
     DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     start_time = get_current_datetime()
     upscale_ratio = opt.hr_size // opt.lr_size
-    print(f"# DEVICE = {DEVICE}, UPSCALE_RATIO = {upscale_ratio}")
     
     # 데이터셋 준비
     train_datas_root = os.path.join(opt.root_dir, 'train')
