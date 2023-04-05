@@ -8,7 +8,6 @@ from torch.utils.data import DataLoader
 from model.base import save_model
 from utils.dataset import train_Dataset, valid_Dataset
 from utils.metric import AverageMeter, get_current_datetime
-from utils.colortext import color_print
 
 # 모델 관련 임포트
 from model.mobilesr import MOBILESR
@@ -17,7 +16,7 @@ from model.rlfn import RLFN
 parser = argparse.ArgumentParser()
 # 모델학습 공통사항
 # 학습데이터 관련 hyperparameter
-parser.add_argument('--batch_size', type=int, default=1, help='배치 크기')
+parser.add_argument('--batch_size', type=int, default=4, help='배치 크기')
 parser.add_argument('--root_dir', type=str, default='../data/DF2K_SPLIT', help='데이터셋 루트 디렉토리 경로')
 parser.add_argument('--preload', action='store_true', help='데이터셋 미리 로드 여부')
 parser.add_argument('--patch', type=int, default=4, help='패치의 갯수')
@@ -27,7 +26,7 @@ parser.add_argument('--lr_size', type=int, default=64, help='저해상도 이미
 
 # 훈련 관련 hyperparameter
 parser.add_argument("--lr", type=float, default=1e-3, help="초기 Learning rate")
-parser.add_argument("--loss", type=str, default="l2", choices=['l1', 'l2'], help="loss function to use")
+parser.add_argument("--loss", type=str, default="l1", choices=['l1', 'l2'], help="loss function to use")
 parser.add_argument('--epochs', type=int, default=50, help='훈련 에포크 수')
 
 # 모델 저장 관련 hyperparameter
@@ -51,7 +50,7 @@ def main():
     actual_batch_size = opt.batch_size*opt.patch
     train_loader = DataLoader(train_dataset, batch_size=actual_batch_size, shuffle=True,
                               collate_fn=train_dataset.collate_fn)
-    valid_loader = DataLoader(valid_dataset, actual_batch_size, shuffle=False,)
+    valid_loader = DataLoader(valid_dataset, batch_size=actual_batch_size, shuffle=True)
 
     # 모델 준비
     # net = MOBILESR(upscaling_factor=upscale_ratio)
@@ -96,17 +95,15 @@ def main():
             optimizer.step()
             train_loss_meter.update(loss, 1)
             train_bar.set_description(
-                color_print(
-                f"# TRAIN [{e}/{opt.epochs}] loss_avg = {train_loss_meter.avg:.5f}", "green", False
-                )
+                f"# TRAIN [{e}/{opt.epochs}] loss_avg = {train_loss_meter.avg:.5f}"
             )
         
         train_loss_meter.reset()
         
         # Validation
         net = net.eval()
-        valid_bar = tqdm(valid_loader, ncols=120)
-        for lr, hr in valid_loader:
+        valid_bar = tqdm(valid_loader)
+        for lr, hr in valid_bar:
             lr, hr = lr.to(DEVICE), hr.to(DEVICE)
             with torch.no_grad():
                 sr = net(lr)
@@ -120,10 +117,10 @@ def main():
             ssim_meter.update(ssim_score)
 
             valid_bar.set_description(
-                color_print(
-                f"# VALID [{e}/{opt.epochs}] PSNR={psnr_meter.avg:.5f} SSIM={ssim_meter.avg:.5f}", "blue", False)
+                f"# VALID [{e}/{opt.epochs}] PSNR={psnr_meter.avg:.5f} SSIM={ssim_meter.avg:.5f}"
             )
-        
+
+
         lr_scheduler.step(validation_loss_meter.avg)
         
         # validation에 사용된 Metric 초기화

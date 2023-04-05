@@ -9,7 +9,6 @@ from multiprocessing import Pool
 from typing import Tuple, Union, List
 from torch.utils.data import Dataset
 from .io import is_image_file, read_img, to_tensor
-from .colortext import color_print
 
 def get_interpolation():
     """
@@ -54,7 +53,7 @@ class base_Dataset(Dataset):
                 preloaded_data.append(img_data)
         pool.close()
         pool.join()
-        color_print("\033[F\033[J ==> IMAGE PRELOAD COMPLETE", 'green')
+        print("\033[F\033[J ==> IMAGE PRELOAD COMPLETE")
         return preloaded_data
     
 class train_Dataset(base_Dataset):
@@ -177,3 +176,14 @@ class valid_Dataset(base_Dataset):
         lr_tensor = to_tensor(lr_obj)
         
         return lr_tensor, hr_tensor
+    
+    @staticmethod
+    def collate_fn(batch):
+        """
+        배치 단위로 데이터를 묶어주는 함수입니다.
+        HR 이미지와 LR 이미지를 묶어서 튜플로 반환합니다.
+        """
+        hr_imgs, lr_imgs = zip(*batch)
+        hr_imgs = torch.cat(hr_imgs, 0)
+        lr_imgs = torch.cat(lr_imgs, 0)
+        return hr_imgs, lr_imgs
