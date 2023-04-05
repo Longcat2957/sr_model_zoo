@@ -19,18 +19,18 @@ def get_interpolation():
     return interpolation
 
 class base_Dataset(Dataset):
-    def __init__(self, root:str, preload:bool) -> None:
+    def __init__(self, root: str, preload: bool) -> None:
         super().__init__()
-        
+
         # 이미지 디렉토리가 비어있는지 확인합니다.
         assert len(os.listdir(root)) > 0, f"이미지 디렉토리:{root} 가 비어있습니다."
-        
+
         # 이미지 파일 경로를 리스트에 저장합니다.
         self.img_paths = [os.path.join(root, name) for name in os.listdir(root) if is_image_file(name)]
 
         # 이미지 파일이 없는 경우 예외를 발생시킵니다.
         assert len(self.img_paths) > 0, f"이미지 디렉토리:{root}에 이미지 파일이 없습니다."
-        
+
         # 데이터셋 크기를 저장합니다.
         self.data_length = len(self.img_paths)
 
@@ -43,14 +43,15 @@ class base_Dataset(Dataset):
     def __len__(self) -> int:
         return self.data_length
 
-    def __getitem__(self, idx:int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         pass
 
-    def _preload(self) -> Union[List[np.ndarray], np.ndarray]:
-        # 모든 CPU 코어를 사용해 이미지 데이터를 병렬로 미리 로드합니다.
+    def _preload(self) -> Union[List[torch.Tensor], torch.Tensor]:
         print(f"START IMAGE PRELOAD ...")
-        with Pool(processes=os.cpu_count()) as p:
-            preloaded_data = list(tqdm(p.imap(read_img, self.img_paths), total=self.data_length))
+        with Pool(processes=os.cpu_count()) as pool:
+            preloaded_data = list(tqdm(pool.imap(read_img, self.img_paths), total=self.data_length))
+        pool.close()
+        pool.join()
         color_print("\033[F\033[J ==> IMAGE PRELOAD COMPLETE", 'green')
         return preloaded_data
     
