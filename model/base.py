@@ -2,17 +2,16 @@ import torch
 import torch.nn as nn
 from thop import profile
 
-def save_model(model: nn.Module, name: str):
+def save_model(model: nn.Module, path: str):
     # 모델의 상태 저장
     state_dict = model.state_dict()
     
     # 저장할 디렉토리와 파일 이름 지정
-    path = f"{name}.pt"
     
     # 모델 저장
     torch.save(state_dict, path)
     
-    print(f"모델이 {path}에 저장되었습니다.")
+    # print(f"모델이 {path}에 저장되었습니다.")
 
 '''
     try:
@@ -27,9 +26,7 @@ def save_model(model: nn.Module, name: str):
         # 모델 사용
 '''
 
-def load_model(model: nn.Module, name: str):
-    # 불러올 모델 경로
-    path = f"{name}.pt"
+def load_model(model: nn.Module, path: str):
 
     try:
         # 모델 파일 불러오기

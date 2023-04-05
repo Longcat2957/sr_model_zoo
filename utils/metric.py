@@ -2,6 +2,11 @@ import torch
 import math
 import numpy as np
 from typing import Union, Iterable
+from datetime import datetime
+
+def get_current_datetime() -> str:
+    now = datetime.now()
+    return now.strftime("%Y%m%d%H%M")
 
 class AverageMeter:
     """
