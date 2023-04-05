@@ -51,6 +51,11 @@ if __name__ == '__main__':
     # 최적화
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
 
+    # 스케줄러
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode='min', factor=0.1, patience=10
+    )
+
     # Metric
     train_loss_meter = AverageMeter()
     psnr_meter = AverageMeter()
@@ -75,6 +80,7 @@ if __name__ == '__main__':
             train_bar.set_description(
                 f"# TRAIN [{e}/{opt.epochs}] loss_avg = {train_loss_meter.avg:.5f}"
             )
+        lr_scheduler.step()
 
         train_loss_meter.reset()
         net = net.eval()
