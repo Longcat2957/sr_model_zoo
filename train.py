@@ -71,7 +71,7 @@ if __name__ == '__main__':
                 continue
             loss.backward()
             optimizer.step()
-            train_loss_meter.update(loss)
+            train_loss_meter.update(loss, 1)
             train_bar.set_description(
                 f"# TRAIN [{e}/{opt.epochs}] loss_avg = {train_loss_meter.avg:.5f}"
             )
@@ -90,5 +90,5 @@ if __name__ == '__main__':
             ssim_meter.update(ssim_score)
 
             valid_bar.set_description(
-                f"# VALID [{e}/{opt.epochs}] PNSR={psnr_meter.avg:.5f} SSIM={ssim_meter.avg:.5f}"
+                f"# VALID [{e}/{opt.epochs}] PSNR={psnr_meter.avg:.5f} SSIM={ssim_meter.avg:.5f}"
             )
