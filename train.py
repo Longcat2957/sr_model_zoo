@@ -5,7 +5,7 @@ import argparse
 from tqdm import tqdm
 from torchmetrics.functional import peak_signal_noise_ratio, structural_similarity_index_measure
 from torch.utils.data import DataLoader
-from model.base import save_model
+from model.base import save_model, load_model
 from utils.dataset import train_Dataset, valid_Dataset
 from utils.metric import AverageMeter, get_current_datetime
 
@@ -33,6 +33,9 @@ parser.add_argument('--epochs', type=int, default=50, help='훈련 에포크 수
 parser.add_argument('--save_freq', type=int, default=10, help='모델 저장 빈도')
 parser.add_argument('--tag', type=str, default=None)
 
+# 모델 로딩 관련 hyperparameter
+parser.add_argument('--load', type=str, default=None, help="pre-trained weights")
+
 def main():
     opt = parser.parse_args()
     DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -55,6 +58,14 @@ def main():
     # 모델 준비
     # net = MOBILESR(upscaling_factor=upscale_ratio)
     net = RLFN()
+
+    # 모델 로드
+    if opt.load is not None:
+        try:
+            net = load_model(net, opt.load)
+            print(f"# Model load Success")
+        except:
+            print(f"# Model load failed ...")
     net = net.to(DEVICE)
 
     # 손실 함수
