@@ -25,6 +25,7 @@ parser.add_argument('--hr_size', type=int, default=256, help='고해상도 이�
 parser.add_argument('--lr_size', type=int, default=64, help='저해상도 이미지 크기')
 
 # 훈련 관련 hyperparameter
+parser.add_argument("--amp", action='store_true', help="Automatic Mixed Precision")                             # <=== in progress
 parser.add_argument("--lr", type=float, default=1e-3, help="초기 Learning rate")
 parser.add_argument("--loss", type=str, default="l1", choices=['l1', 'l2'], help="loss function to use")
 parser.add_argument('--epochs', type=int, default=50, help='훈련 에포크 수')
@@ -51,9 +52,10 @@ def main():
     valid_dataset = valid_Dataset(valid_datas_root, opt.preload, opt.hr_size, opt.lr_size)
 
     actual_batch_size = opt.batch_size*opt.patch
+    data_loading_workers = min(os.cpu_count(), actual_batch_size)
     train_loader = DataLoader(train_dataset, batch_size=actual_batch_size, shuffle=True,
-                              collate_fn=train_dataset.collate_fn)
-    valid_loader = DataLoader(valid_dataset, batch_size=actual_batch_size, shuffle=True)
+                              collate_fn=train_dataset.collate_fn, num_workers=data_loading_workers)
+    valid_loader = DataLoader(valid_dataset, batch_size=actual_batch_size, shuffle=True, num_workers=data_loading_workers)
 
     # 모델 준비
     # net = MOBILESR(upscaling_factor=upscale_ratio)
