@@ -9,9 +9,13 @@ from model.base import save_model, load_model
 from utils.dataset import train_Dataset, valid_Dataset
 from utils.metric import AverageMeter, get_current_datetime
 
+# amp 관련
+from torch.cuda.amp import GradScaler, autocast
+
 # 모델 관련 임포트
 from model.mobilesr import MOBILESR
 from model.rlfn import RLFN
+from model.safmn import SAFMN
 
 parser = argparse.ArgumentParser()
 # 모델학습 공통사항
@@ -44,6 +48,9 @@ def main():
     start_time = get_current_datetime()
     upscale_ratio = opt.hr_size // opt.lr_size
     
+    # Automatic Mixed Precision
+    scaler = GradScaler() if opt.amp else None
+
     # 데이터셋 준비
     train_datas_root = os.path.join(opt.root_dir, 'train')
     valid_datas_root = os.path.join(opt.root_dir, 'valid')
@@ -63,7 +70,8 @@ def main():
 
     # 모델 준비
     # net = MOBILESR(upscaling_factor=upscale_ratio)
-    net = RLFN()
+    # net = RLFN(upscale_rato=upscale_ratio)
+    net = SAFMN(dim=36, n_blocks=8, ffn_scale=2.0, upscale_ratio=upscale_ratio)
 
     # 모델 로드
     if opt.load is not None:
@@ -99,22 +107,42 @@ def main():
         net = net.train()
         train_bar = tqdm(train_loader, ncols=120)
         for lr, hr in train_bar:
+            # load tensors to DEVICE
             lr, hr = lr.to(DEVICE), hr.to(DEVICE)
-            sr = net(lr)
-
             optimizer.zero_grad()
 
-            loss = criterion(sr, hr)
-            if torch.isnan(loss):
-                print(f"#[ERROR] loss is NAN")
-                continue
-            loss.backward()
-            optimizer.step()
-            train_loss_meter.update(loss, 1)
-            train_bar.set_description(
-                f"# TRAIN [{e}/{opt.epochs}] loss_avg = {train_loss_meter.avg:.5f}"
-            )
-        
+            # if use amp
+            if opt.amp:
+                # forward pass
+                with autocast():
+                    sr = net(lr)
+                    loss = criterion(sr, hr)
+                if torch.isnan(loss):
+                    print(f"#[ERROR] loss is NAN")
+                    continue
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+                train_loss_meter.update(loss, 1)
+                train_bar.set_description(
+                    f"# TRAIN [{e}/{opt.epochs}] loss_avg = {train_loss_meter.avg:.5f}"
+                )
+
+            # if not use amp
+            else:
+                # forward pass
+                sr = net(lr)
+                loss = criterion(sr, hr)
+                if torch.isnan(loss):
+                    print(f"#[ERROR] loss is NAN")
+                    continue
+                loss.backward()
+                optimizer.step()
+                train_loss_meter.update(loss, 1)
+                train_bar.set_description(
+                    f"# TRAIN [{e}/{opt.epochs}] loss_avg = {train_loss_meter.avg:.5f}"
+                )
+        # Reset train loss meter
         train_loss_meter.reset()
         
         # Validation
@@ -159,9 +187,9 @@ def main():
             
             # save file name
             if opt.tag is not None:
-                save_file_name = f"{opt.tag}_{e}_{opt.epochs}.pth"
+                save_file_name = f"{opt.tag}_x{upscale_ratio}_{e}_{opt.epochs}.pth"
             else:
-                save_file_name = f"{e}_{opt.epochs}.pth"
+                save_file_name = f"{e}_x{upscale_ratio}_{opt.epochs}.pth"
             save_file_name = os.path.join(SAVE_ROOT, save_file_name)
             save_model(net, save_file_name)
 
@@ -180,9 +208,9 @@ def main():
             
             # save file name
             if opt.tag is not None:
-                save_file_name = f"{opt.tag}_final_{opt.epochs}.pth"
+                save_file_name = f"{opt.tag}_x{upscale_ratio}_final_{opt.epochs}.pth"
             else:
-                save_file_name = f"final_{opt.epochs}.pth"
+                save_file_name = f"final_x{upscale_ratio}_{opt.epochs}.pth"
             save_file_name = os.path.join(SAVE_ROOT, save_file_name)
             save_model(net, save_file_name)
 
