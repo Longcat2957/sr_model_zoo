@@ -70,8 +70,8 @@ def main():
 
     # 모델 준비
     # net = MOBILESR(upscaling_factor=upscale_ratio)
-    # net = RLFN(upscale_rato=upscale_ratio)
-    net = SAFMN(dim=36, n_blocks=8, ffn_scale=2.0, upscale_ratio=upscale_ratio)
+    net = RLFN(upscale_ratio=upscale_ratio)
+    # net = SAFMN(dim=36, n_blocks=8, ffn_scale=2.0, upscale_ratio=upscale_ratio)
 
     # 모델 로드
     if opt.load is not None:

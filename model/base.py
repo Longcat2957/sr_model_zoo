@@ -47,7 +47,7 @@ def load_model(model: nn.Module, path: str):
 
 def evaluate_model(model: nn.Module, input_size: tuple = (1, 3, 256, 256)):
     # 모델의 FLOPs와 파라미터 수 계산
-    flops, params = profile(model, inputs=(torch.randn(*input_size),))
+    flops, params = profile(model, inputs=(torch.randn(*input_size).cuda(),))
     
     # 결과 출력
     print(f"모델의 FLOPs: {flops / (10. ** 9):.3f} GFLOPs")
