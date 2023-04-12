@@ -14,7 +14,7 @@ from torch.cuda.amp import GradScaler, autocast
 
 # 모델 관련 임포트
 from model.mobilesr import MOBILESR
-from model.rlfn import RLFN
+from model.rlfn import RLFN, RLFN_Prune
 from model.safmn import SAFMN
 
 parser = argparse.ArgumentParser()
@@ -70,8 +70,9 @@ def main():
 
     # 모델 준비
     # net = MOBILESR(upscaling_factor=upscale_ratio)
-    net = RLFN(upscale_ratio=upscale_ratio)
+    # net = RLFN(upscale_ratio=upscale_ratio)
     # net = SAFMN(dim=36, n_blocks=8, ffn_scale=2.0, upscale_ratio=upscale_ratio)
+    net = RLFN_Prune()
 
     # 모델 로드
     if opt.load is not None:
@@ -92,8 +93,11 @@ def main():
     optimizer = torch.optim.Adam(net.parameters(), lr=opt.lr)
 
     # 스케줄러
-    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=0.1, patience=10
+    # lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    #     optimizer, mode='min', factor=0.1, patience=10
+    # )
+    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=40, eta_min=1e-7
     )
 
     # Metric
@@ -166,7 +170,7 @@ def main():
             )
 
 
-        lr_scheduler.step(validation_loss_meter.avg)
+        lr_scheduler.step()
         
         # validation에 사용된 Metric 초기화
         validation_loss_meter.reset()

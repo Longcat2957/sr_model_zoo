@@ -146,4 +146,4 @@ def sisr_postprocess(t: torch.Tensor) -> list:
     o = t.round().to(dtype=torch.uint8).cpu().numpy()
 
     # numpy.ndarray의 차원 순서를 변경하여 반환합니다.
-    return [np.transpose(o[i], axes=[1, 2, 0]) for i in range(len(o))]
+    return [np.transpose(o[i], axes=[1, 2, 0])[:,:,::-1] for i in range(len(o))]
