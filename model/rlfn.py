@@ -137,3 +137,47 @@ class RLFN(nn.Module):
         out_los_res = self.conv_2(out_b6) + out_feature
         output = self.upsampler(out_los_res)
         return output
+    
+class RLFN_Prune(nn.Module):
+    """
+    Residual Local Feature Network (RLFN)
+    Model definition of RLFN in NTIRE 2022 Efficient SR Challenge
+    """
+
+    def __init__(self,
+                 in_channels=3,
+                 out_channels=3,
+                 feature_channels=30,
+                 mid_channels=32,
+                 upscale=3):
+        super(RLFN_Prune, self).__init__()
+
+        self.conv_1 = conv_layer(in_channels,
+                                       feature_channels,
+                                       kernel_size=3)
+
+        self.block_1 = RLFB(feature_channels, mid_channels)
+        self.block_2 = RLFB(feature_channels, mid_channels)
+        self.block_3 = RLFB(feature_channels, mid_channels)
+        self.block_4 = RLFB(feature_channels, mid_channels)
+
+        self.conv_2 = conv_layer(feature_channels,
+                                       feature_channels,
+                                       kernel_size=3)
+
+        self.upsampler = pixelshuffle_blocks(feature_channels,
+                                                  out_channels,
+                                                  upscale_factor=upscale)
+
+    def forward(self, x):
+        out_feature = self.conv_1(x)
+
+        out_b1 = self.block_1(out_feature)
+        out_b2 = self.block_2(out_b1)
+        out_b3 = self.block_3(out_b2)
+        out_b4 = self.block_4(out_b3)
+
+        out_low_resolution = self.conv_2(out_b4) + out_feature
+        output = self.upsampler(out_low_resolution)
+
+        return output
